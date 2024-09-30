@@ -1,0 +1,82 @@
+// Source code is decompiled from a .class file using FernFlower decompiler.
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.security.KeyStore;
+import java.security.SecureRandom;
+import java.util.StringTokenizer;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.TrustManagerFactory;
+
+public class SecureAdditionServer {
+   private int port;
+   static final int DEFAULT_PORT = 8189;
+   static final String KEYSTORE = "LIUkeystore.ks";
+   static final String TRUSTSTORE = "LIUtruststore.ks";
+   static final String KEYSTOREPASS = "123456";
+   static final String TRUSTSTOREPASS = "abcdef";
+
+   SecureAdditionServer(int var1) {
+      this.port = var1;
+   }
+
+   public void run() {
+      try {
+         KeyStore var1 = KeyStore.getInstance("JCEKS");
+         var1.load(new FileInputStream("LIUkeystore.ks"), "123456".toCharArray());
+         KeyStore var2 = KeyStore.getInstance("JCEKS");
+         var2.load(new FileInputStream("LIUtruststore.ks"), "abcdef".toCharArray());
+         KeyManagerFactory var3 = KeyManagerFactory.getInstance("SunX509");
+         var3.init(var1, "123456".toCharArray());
+         TrustManagerFactory var4 = TrustManagerFactory.getInstance("SunX509");
+         var4.init(var2);
+         SSLContext var5 = SSLContext.getInstance("TLS");
+         var5.init(var3.getKeyManagers(), var4.getTrustManagers(), (SecureRandom)null);
+         SSLServerSocketFactory var6 = var5.getServerSocketFactory();
+         SSLServerSocket var7 = (SSLServerSocket)var6.createServerSocket(this.port);
+         var7.setEnabledCipherSuites(var7.getSupportedCipherSuites());
+         System.out.println("\n>>>> SecureAdditionServer: active ");
+         SSLSocket var8 = (SSLSocket)var7.accept();
+         BufferedReader var9 = new BufferedReader(new InputStreamReader(var8.getInputStream()));
+         PrintWriter var10 = new PrintWriter(var8.getOutputStream(), true);
+
+         String var11;
+         while(!(var11 = var9.readLine()).equals("")) {
+            double var12 = 0.0;
+            StringTokenizer var14 = new StringTokenizer(var11);
+
+            try {
+               while(var14.hasMoreTokens()) {
+                  Double var15 = new Double(var14.nextToken());
+                  var12 += var15;
+               }
+
+               var10.println("The result is " + var12);
+            } catch (NumberFormatException var16) {
+               var10.println("Sorry, your list contains an invalid number");
+            }
+         }
+
+         var8.close();
+      } catch (Exception var17) {
+         System.out.println(var17);
+         var17.printStackTrace();
+      }
+
+   }
+
+   public static void main(String[] var0) {
+      int var1 = 8189;
+      if (var0.length > 0) {
+         var1 = Integer.parseInt(var0[0]);
+      }
+
+      SecureAdditionServer var2 = new SecureAdditionServer(var1);
+      var2.run();
+   }
+}
